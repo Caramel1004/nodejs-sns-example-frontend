@@ -14,7 +14,7 @@ class SinglePost extends Component {
 
   componentDidMount() {
     const postId = this.props.match.params.postId;
-    fetch('URL')
+    fetch('http://localhost:8080/feed/posts/' + postId)
       .then(res => {
         if (res.status !== 200) {
           throw new Error('Failed to fetch status');
@@ -23,10 +23,11 @@ class SinglePost extends Component {
       })
       .then(resData => {
         this.setState({
-          title: resData.post.title,
-          author: resData.post.creator.name,
-          date: new Date(resData.post.createdAt).toLocaleDateString('en-US'),
-          content: resData.post.content
+          title: resData.postDetail.title,
+          author: resData.postDetail.creator.name,
+          date: new Date(resData.postDetail.createdAt).toLocaleDateString('en-US'),
+          content: resData.postDetail.content,
+          image: 'http://localhost:8080/'+ resData.postDetail.imageUrl
         });
       })
       .catch(err => {

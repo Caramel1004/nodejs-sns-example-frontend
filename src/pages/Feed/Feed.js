@@ -107,11 +107,16 @@ class Feed extends Component {
 
   // 새로운 게시울을 추가하거나 기존 게시물을 편집할 수 있음
   finishEditHandler = postData => {
-    console.log('postData: ',postData);
+    console.log('postData: ', postData);
     this.setState({
       editLoading: true
     });
     // Set up data (with image!)
+    const formData = new FormData();
+    formData.append('title', postData.title);
+    formData.append('content', postData.content);
+    formData.append('image', postData.image);//프론트엔드에선 image 백엔드에선 imageUrl -> 프론트엔드: 변수를 image로 할당해놓았음
+    
     let url = 'http://localhost:8080/feed/post';
     let method = 'POST';
 
@@ -120,15 +125,12 @@ class Feed extends Component {
     }
 
     // option 추가: 요청메소드, 데이터 형태
-    fetch(url,{
+    // headers: {
+    //   'Content-Type': 'application/json'
+    // },  => 삭제
+    fetch(url, {
       method: method,
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        title: postData.title,
-        content: postData.content
-      })
+      body: formData
     })
       .then(res => {
         if (res.status !== 200 && res.status !== 201) {
@@ -137,7 +139,7 @@ class Feed extends Component {
         return res.json();
       })
       .then(resData => {
-        console.log('resData: ',resData)
+        console.log('resData: ', resData)
         const post = {
           _id: resData.post._id,
           title: resData.post.title,
