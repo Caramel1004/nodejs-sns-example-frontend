@@ -40,6 +40,7 @@ class Feed extends Component {
 
   // 기존 게시물을 불러옴
   loadPosts = direction => {
+    console.log('direction: ',direction)
     if (direction) {
       this.setState({ postsLoading: true, posts: [] });
     }
@@ -52,7 +53,8 @@ class Feed extends Component {
       page--;
       this.setState({ postPage: page });
     }
-    fetch('http://localhost:8080/feed/posts')
+
+    fetch('http://localhost:8080/feed/posts?page=' + page)
       .then(res => {
         if (res.status !== 200) {
           throw new Error('Failed to fetch posts.');
@@ -60,6 +62,8 @@ class Feed extends Component {
         return res.json();
       })
       .then(resData => {
+        console.log('resData: ',resData)
+
         this.setState({
           posts: resData.posts.map(post => {
             let updatePost = {
@@ -68,7 +72,8 @@ class Feed extends Component {
             }
             return updatePost;
           }),
-          totalPosts: resData.totalItems,
+          totalPosts: resData.totalItem,
+          itemPerPage: resData.itemPerPage,
           postsLoading: false
         });
       })
@@ -191,7 +196,7 @@ class Feed extends Component {
   // 게시물을 삭제
   deletePostHandler = postId => {
     this.setState({ postsLoading: true });
-    fetch('http://localhost:8080/feed/post-delete/' + postId,{
+    fetch('http://localhost:8080/feed/post-delete/' + postId, {
       method: 'DELETE',
       postId: postId
     })
@@ -265,7 +270,7 @@ class Feed extends Component {
             <Paginator
               onPrevious={this.loadPosts.bind(this, 'previous')}
               onNext={this.loadPosts.bind(this, 'next')}
-              lastPage={Math.ceil(this.state.totalPosts / 2)}
+              lastPage={Math.ceil(this.state.totalPosts / this.state.itemPerPage)}
               currentPage={this.state.postPage}
             >
               {this.state.posts.map(post => (
