@@ -28,3 +28,37 @@ postData("https://example.com/answer", { answer: 42 }).then((data) => {
   console.log(data); // JSON data parsed by `data.json()` call
 });
 ```
+
+# React &&연산자
+- JSX 안에는 중괄호를 이용해서 표현식을 포함 할 수 있습니다. 그 안에 JavaScript의 논리 연산자 &&를 사용하면 쉽게 엘리먼트를 조건부로 넣을 수 있습니다.
+JavaScript에서 true && expression은 항상 expression으로 평가되고 false && expression은 항상 false로 평가됩니다.
+따라서 && 뒤의 엘리먼트는 조건이 true일때 출력이 됩니다. 조건이 false라면 React는 무시하고 건너뜁니다.
+
+-&&연산자 앞부분은 조건식 &&연산자 뒷부분은 expression
+```javascript
+import React from 'react';
+
+import './Paginator.css';
+
+const paginator = props => (
+  <div className="paginator">
+    {props.children}
+    <div className="paginator__controls">
+      {(props.currentPage > 1) && (
+        <button className="paginator__control" onClick={props.onPrevious}>
+          Previous
+        </button>
+      )
+      }
+      {(props.currentPage === 1 || props.currentPage < props.lastPage) && (
+        <button className="paginator__control" onClick={props.onNext}>
+          Next
+        </button>
+      )
+      }
+    </div>
+  </div>
+);
+
+export default paginator;
+```
