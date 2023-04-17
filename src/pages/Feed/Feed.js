@@ -61,7 +61,13 @@ class Feed extends Component {
       })
       .then(resData => {
         this.setState({
-          posts: resData.posts,
+          posts: resData.posts.map(post => {
+            let updatePost = {
+              ...post,
+              imagePath: post.imageUrl
+            }
+            return updatePost;
+          }),
           totalPosts: resData.totalItems,
           postsLoading: false
         });
@@ -116,12 +122,14 @@ class Feed extends Component {
     formData.append('title', postData.title);
     formData.append('content', postData.content);
     formData.append('image', postData.image);//프론트엔드에선 image 백엔드에선 imageUrl -> 프론트엔드: 변수를 image로 할당해놓았음
-    
+
     let url = 'http://localhost:8080/feed/post';
     let method = 'POST';
 
+    // 게시물 수정유무
     if (this.state.editPost) {
-      url = 'URL';
+      url = 'http://localhost:8080/feed/post/' + this.state.editPost._id;
+      method = 'PUT';
     }
 
     // option 추가: 요청메소드, 데이터 형태
@@ -183,7 +191,10 @@ class Feed extends Component {
   // 게시물을 삭제
   deletePostHandler = postId => {
     this.setState({ postsLoading: true });
-    fetch('URL')
+    fetch('http://localhost:8080/feed/post-delete/' + postId,{
+      method: 'DELETE',
+      postId: postId
+    })
       .then(res => {
         if (res.status !== 200 && res.status !== 201) {
           throw new Error('Deleting a post failed!');
