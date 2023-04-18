@@ -62,3 +62,22 @@ const paginator = props => (
 
 export default paginator;
 ```
+
+# 오류
+- 포트 충돌 오류
+
+```t
+Something is already running on port 3000. Probably:
+```
+해결: 
+해당 프로세스를 종료하는 방법을 검색 할 수 있습니다.
+
+Linux / Mac OS 검색의 경우 터미널에서 (sudo) 실행 :
+
+$ lsof -i tcp:3000
+$ kill -9 PID
+Windows :
+
+netstat -ano | findstr :3000
+tskill typeyourPIDhere 
+git bash에서 taskkill 에 대한 tskill 변경
