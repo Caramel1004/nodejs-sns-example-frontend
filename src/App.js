@@ -14,10 +14,11 @@ import SignupPage from './pages/Auth/Signup';
 import './App.css';
 
 class App extends Component {
+  //isAuth: 인증여부
   state = {
     showBackdrop: false,
     showMobileNav: false,
-    isAuth: true,
+    isAuth: false,
     token: null,
     userId: null,
     authLoading: false,
@@ -100,11 +101,25 @@ class App extends Component {
   signupHandler = (event, authData) => {
     event.preventDefault();
     this.setState({ authLoading: true });
-    fetch('URL')
+    const email = authData.signupForm.email.value;
+    const password = authData.signupForm.password.value;
+    const name = authData.signupForm.name.value;
+
+    fetch('http://localhost:8080/auth/signup', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        email: email,
+        password: password,
+        name: name
+      })
+    })
       .then(res => {
         if (res.status === 422) {
           throw new Error(
-            "Validation failed. Make sure the email address isn't used yet!"
+            "요청이 실패하였습니다."
           );
         }
         if (res.status !== 200 && res.status !== 201) {
