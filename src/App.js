@@ -57,12 +57,27 @@ class App extends Component {
     localStorage.removeItem('userId');
   };
 
+  // 로그인
   loginHandler = (event, authData) => {
     event.preventDefault();
     this.setState({ authLoading: true });
-    fetch('URL')
+
+    const email = authData.email;
+    const password = authData.password;
+
+    fetch('http://localhost:8080/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        email: email,
+        password: password,
+      })
+    })
       .then(res => {
         if (res.status === 422) {
+          console.log(res.json());
           throw new Error('Validation failed.');
         }
         if (res.status !== 200 && res.status !== 201) {
@@ -98,6 +113,7 @@ class App extends Component {
       });
   };
 
+  // 회원가입
   signupHandler = (event, authData) => {
     event.preventDefault();
     this.setState({ authLoading: true });

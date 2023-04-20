@@ -40,7 +40,7 @@ class Feed extends Component {
 
   // 기존 게시물을 불러옴
   loadPosts = direction => {
-    console.log('direction: ',direction)
+    console.log('direction: ', direction)
     if (direction) {
       this.setState({ postsLoading: true, posts: [] });
     }
@@ -54,7 +54,11 @@ class Feed extends Component {
       this.setState({ postPage: page });
     }
 
-    fetch('http://localhost:8080/feed/posts?page=' + page)
+    fetch('http://localhost:8080/feed/posts?page=' + page, {
+      headers:{
+        Authorization: 'Bearer ' + this.props.token
+      }
+    })
       .then(res => {
         if (res.status !== 200) {
           throw new Error('Failed to fetch posts.');
@@ -62,7 +66,7 @@ class Feed extends Component {
         return res.json();
       })
       .then(resData => {
-        console.log('resData: ',resData)
+        console.log('resData: ', resData)
 
         this.setState({
           posts: resData.posts.map(post => {
@@ -143,7 +147,10 @@ class Feed extends Component {
     // },  => 삭제
     fetch(url, {
       method: method,
-      body: formData
+      body: formData,
+      headers:{
+        Authorization: 'Bearer ' + this.props.token
+      }
     })
       .then(res => {
         if (res.status !== 200 && res.status !== 201) {
@@ -198,7 +205,10 @@ class Feed extends Component {
     this.setState({ postsLoading: true });
     fetch('http://localhost:8080/feed/post-delete/' + postId, {
       method: 'DELETE',
-      postId: postId
+      postId: postId,
+      headers:{
+        Authorization: 'Bearer ' + this.props.token
+      }
     })
       .then(res => {
         if (res.status !== 200 && res.status !== 201) {
