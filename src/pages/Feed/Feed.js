@@ -1,4 +1,5 @@
 import React, { Component, Fragment } from 'react';
+import openSocket from 'socket.io-client';
 
 import Post from '../../components/Feed/Post/Post';
 import Button from '../../components/Button/Button';
@@ -21,9 +22,15 @@ class Feed extends Component {
     editLoading: false
   };
 
-  // 현재 로그인된 사용자의 상태를 불러옴
+  // 현재 로그인된 사용자의 상태를 불러옴 -> 컴포넌트 탑재
   componentDidMount() {
-    fetch('URL')
+    // this에 생성자가 저장되있으므로 this 쓸것
+    console.log('token: ', this.props.token);
+    fetch('http://localhost:8080/auth/status', {
+      headers: {
+        Authorization: 'Bearer ' + this.props.token
+      }
+    })
       .then(res => {
         if (res.status !== 200) {
           throw new Error('Failed to fetch user status.');
@@ -36,6 +43,29 @@ class Feed extends Component {
       .catch(this.catchError);
 
     this.loadPosts();
+
+    // 백엔드에서 넘어온 데이터 처리
+    const socket = openSocket('http://localhost:8080');
+    socket.on('posts', data => {
+      if (data.action === 'create') {
+        this.updatePostBySocket(data.post);
+      }
+    });
+  }
+
+  //웹 소켓을 활용하여 실시간으로 게시물 업데이트
+  updatePostBySocket = post => {
+    this.setState(prevState => {
+      const updatedPosts = [...prevState.posts];
+      if (prevState.postPage === 1) {
+        updatedPosts.pop();
+        updatedPosts.unshift(post);
+      }
+      return {
+        posts: updatedPosts,
+        totalPosts: prevState.totalPosts + 1
+      }
+    })
   }
 
   // 기존 게시물을 불러옴
@@ -55,7 +85,7 @@ class Feed extends Component {
     }
 
     fetch('http://localhost:8080/feed/posts?page=' + page, {
-      headers:{
+      headers: {
         Authorization: 'Bearer ' + this.props.token
       }
     })
@@ -84,10 +114,19 @@ class Feed extends Component {
       .catch(this.catchError);
   };
 
-  // 특정 게시물을 표시하는 url 표시
+  // 유저 상태 업데이트
   statusUpdateHandler = event => {
     event.preventDefault();
-    fetch('URL')
+    fetch('http://localhost:8080/auth/status-update', {
+      method: 'PATCH',
+      headers: {
+        Authorization: 'Bearer ' + this.props.token,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        status: this.state.status
+      })
+    })
       .then(res => {
         if (res.status !== 200 && res.status !== 201) {
           throw new Error("Can't update status!");
@@ -104,7 +143,7 @@ class Feed extends Component {
     this.setState({ isEditing: true });
   };
 
-  // 사용자 상태를 편집할 수 있음
+  // 게시물 상태를 편집할 수 있음
   startEditPostHandler = postId => {
     this.setState(prevState => {
       const loadedPost = { ...prevState.posts.find(p => p._id === postId) };
@@ -132,13 +171,16 @@ class Feed extends Component {
     formData.append('content', postData.content);
     formData.append('image', postData.image);//프론트엔드에선 image 백엔드에선 imageUrl -> 프론트엔드: 변수를 image로 할당해놓았음
 
-    let url = 'http://localhost:8080/feed/post';
-    let method = 'POST';
+    let url;
+    let method;
 
     // 게시물 수정유무
     if (this.state.editPost) {
       url = 'http://localhost:8080/feed/post/' + this.state.editPost._id;
       method = 'PUT';
+    } else {
+      url = 'http://localhost:8080/feed/post';
+      method = 'POST';
     }
 
     // option 추가: 요청메소드, 데이터 형태
@@ -148,7 +190,7 @@ class Feed extends Component {
     fetch(url, {
       method: method,
       body: formData,
-      headers:{
+      headers: {
         Authorization: 'Bearer ' + this.props.token
       }
     })
@@ -164,7 +206,7 @@ class Feed extends Component {
           _id: resData.post._id,
           title: resData.post.title,
           content: resData.post.content,
-          creator: resData.post.creator,
+          creator: resData.creator.name,
           createdAt: resData.post.createdAt
         };
         this.setState(prevState => {
@@ -206,7 +248,7 @@ class Feed extends Component {
     fetch('http://localhost:8080/feed/post-delete/' + postId, {
       method: 'DELETE',
       postId: postId,
-      headers:{
+      headers: {
         Authorization: 'Bearer ' + this.props.token
       }
     })
@@ -287,7 +329,7 @@ class Feed extends Component {
                 <Post
                   key={post._id}
                   id={post._id}
-                  author={post.creator.name}
+                  author={post.creator}
                   date={new Date(post.createdAt).toLocaleDateString('en-US')}
                   title={post.title}
                   image={post.imageUrl}
