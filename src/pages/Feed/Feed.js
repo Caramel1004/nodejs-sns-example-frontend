@@ -46,27 +46,79 @@ class Feed extends Component {
 
     // 백엔드에서 넘어온 데이터 처리
     const socket = openSocket('http://localhost:8080');
-    socket.on('posts', data => {
-      if (data.action === 'create') {
-        this.updatePostBySocket(data.post);
-      }
+    socket.on('updatePost', data => {
+      console.log('백엔드에서 넘어온 data: ', data)
+      this.updatePostBySocket(data.post, data.action);
     });
   }
 
+
   //웹 소켓을 활용하여 실시간으로 게시물 업데이트
-  updatePostBySocket = post => {
+  // CRUD 통합
+  updatePostBySocket = (post, action) => {
+    let updatedPosts;
+    let updatedTotalPosts;
+
     this.setState(prevState => {
-      const updatedPosts = [...prevState.posts];
-      if (prevState.postPage === 1) {
-        updatedPosts.pop();
-        updatedPosts.unshift(post);
+      if (action === 'create') {// 게시물 추가
+        updatedPosts = [post, ...prevState.posts];
+        updatedTotalPosts = prevState.totalPosts + 1;
+      } else if (action === 'edit') {// 게시물 편집
+        updatedPosts = prevState.posts.map(p => {
+          if (p._id === post._id) {
+            p = { ...post };
+            console.log('p: ',p);
+          }
+          return p;
+        })
+        updatedTotalPosts = prevState.totalPosts;
+      } else if (action === 'delete') {// 게시물 삭제
+        updatedPosts = prevState.posts.filter(p => p._id !== post._id);
+        updatedTotalPosts = prevState.totalPosts - 1;
       }
-      return {
+
+      const updatedState = {
         posts: updatedPosts,
-        totalPosts: prevState.totalPosts + 1
+        totalPosts: updatedTotalPosts
       }
+
+      return updatedState;
     })
   }
+  // origin .ver
+  // createPostBySocket = post => {
+  //   this.setState(prevState => {
+  //     console.log('prevState : ', prevState);
+  //     const updatedPosts = [post, ...prevState.posts];
+  //     // if (prevState.postPage === 1) {
+  //     //   updatedPosts.pop();
+  //     //   updatedPosts.unshift(post);
+  //     // }
+  //     return {
+  //       posts: updatedPosts,
+  //       totalPosts: prevState.totalPosts + 1
+  //     }
+  //   })
+  // }
+
+
+  // origin .ver
+  // deletePostBySocket = deletePost => {
+  //   this.setState(prevState => {
+  //     console.log('prevState : ', prevState);
+  //     const updatedPosts = prevState.posts.filter(p => p._id !== deletePost._id);
+  //     console.log('updatedPosts: ', updatedPosts);
+  //     // const updatedPosts = [...prevState.posts];
+  //     // if(prevState.postPage === 1) {
+  //     //   updatedPosts.pop();
+  //     //   updatedPosts.unshift(deletePost);
+  //     // }
+  //     return {
+  //       posts: updatedPosts,
+  //       totalPosts: prevState.totalPosts - 1
+  //     }
+  //   })
+  // }
 
   // 기존 게시물을 불러옴
   loadPosts = direction => {
@@ -206,7 +258,7 @@ class Feed extends Component {
           _id: resData.post._id,
           title: resData.post.title,
           content: resData.post.content,
-          creator: resData.creator.name,
+          creator: resData.post.creator,
           createdAt: resData.post.createdAt
         };
         this.setState(prevState => {
@@ -329,7 +381,7 @@ class Feed extends Component {
                 <Post
                   key={post._id}
                   id={post._id}
-                  author={post.creator}
+                  // author={post.creator}
                   date={new Date(post.createdAt).toLocaleDateString('en-US')}
                   title={post.title}
                   image={post.imageUrl}
